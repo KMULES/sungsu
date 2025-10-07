@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,51 +13,20 @@ import { LogOut, Calendar, Building2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTheme } from "@/components/theme-provider";
 import { Moon, Sun } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import type { VisitBooking, PartnershipInquiry } from "@shared/schema";
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const { theme, toggleTheme } = useTheme();
   
-  const mockVisitBookings = [
-    {
-      id: 1,
-      visitDate: "2025-10-15",
-      name: "김민수",
-      popup: "뮤직 브랜드 팝업",
-      phone: "010-1234-5678",
-    },
-    {
-      id: 2,
-      visitDate: "2025-10-20",
-      name: "이지은",
-      popup: "패션 컬렉션",
-      phone: "010-2345-6789",
-    },
-    {
-      id: 3,
-      visitDate: "2025-10-18",
-      name: "박준호",
-      popup: "아트 갤러리",
-      phone: "010-3456-7890",
-    },
-  ];
+  const { data: visitBookings = [], isLoading: visitBookingsLoading } = useQuery<VisitBooking[]>({
+    queryKey: ["/api/visit-bookings"],
+  });
 
-  const mockPartnershipInquiries = [
-    {
-      id: 1,
-      company: "(주)트렌디컴퍼니",
-      manager: "최영희",
-      phone: "02-1234-5678",
-      email: "contact@trendy.com",
-    },
-    {
-      id: 2,
-      company: "스타일브랜드",
-      manager: "정우성",
-      phone: "02-2345-6789",
-      email: "info@stylebrand.com",
-    },
-  ];
+  const { data: partnershipInquiries = [], isLoading: partnershipLoading } = useQuery<PartnershipInquiry[]>({
+    queryKey: ["/api/partnership-inquiries"],
+  });
 
   const handleLogout = () => {
     console.log("Logout");
@@ -111,28 +79,36 @@ export default function AdminDashboard() {
           <TabsContent value="visits" className="space-y-4">
             <Card>
               <div className="p-6">
-                <h2 className="text-xl font-bold mb-4">방문 일정 신청 목록</h2>
+                <h2 className="text-xl font-bold mb-4">
+                  방문 일정 신청 목록 ({visitBookings.length}건)
+                </h2>
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>방문 날짜</TableHead>
-                        <TableHead>이름</TableHead>
-                        <TableHead>관심 팝업</TableHead>
-                        <TableHead>전화번호</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {mockVisitBookings.map((booking) => (
-                        <TableRow key={booking.id} data-testid={`row-visit-${booking.id}`}>
-                          <TableCell>{booking.visitDate}</TableCell>
-                          <TableCell>{booking.name}</TableCell>
-                          <TableCell>{booking.popup}</TableCell>
-                          <TableCell>{booking.phone}</TableCell>
+                  {visitBookingsLoading ? (
+                    <p className="text-center py-8 text-muted-foreground">로딩 중...</p>
+                  ) : visitBookings.length === 0 ? (
+                    <p className="text-center py-8 text-muted-foreground">신청 내역이 없습니다.</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>방문 날짜</TableHead>
+                          <TableHead>이름</TableHead>
+                          <TableHead>관심 팝업</TableHead>
+                          <TableHead>전화번호</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {visitBookings.map((booking) => (
+                          <TableRow key={booking.id} data-testid={`row-visit-${booking.id}`}>
+                            <TableCell>{booking.visitDate}</TableCell>
+                            <TableCell>{booking.name}</TableCell>
+                            <TableCell>{booking.popup}</TableCell>
+                            <TableCell>{booking.phone}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </div>
               </div>
             </Card>
@@ -141,28 +117,36 @@ export default function AdminDashboard() {
           <TabsContent value="partnerships" className="space-y-4">
             <Card>
               <div className="p-6">
-                <h2 className="text-xl font-bold mb-4">브랜드 제휴 및 광고 문의 목록</h2>
+                <h2 className="text-xl font-bold mb-4">
+                  브랜드 제휴 및 광고 문의 목록 ({partnershipInquiries.length}건)
+                </h2>
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>기업명</TableHead>
-                        <TableHead>담당자명</TableHead>
-                        <TableHead>전화번호</TableHead>
-                        <TableHead>이메일</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {mockPartnershipInquiries.map((inquiry) => (
-                        <TableRow key={inquiry.id} data-testid={`row-partnership-${inquiry.id}`}>
-                          <TableCell>{inquiry.company}</TableCell>
-                          <TableCell>{inquiry.manager}</TableCell>
-                          <TableCell>{inquiry.phone}</TableCell>
-                          <TableCell>{inquiry.email}</TableCell>
+                  {partnershipLoading ? (
+                    <p className="text-center py-8 text-muted-foreground">로딩 중...</p>
+                  ) : partnershipInquiries.length === 0 ? (
+                    <p className="text-center py-8 text-muted-foreground">문의 내역이 없습니다.</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>기업명</TableHead>
+                          <TableHead>담당자명</TableHead>
+                          <TableHead>전화번호</TableHead>
+                          <TableHead>이메일</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {partnershipInquiries.map((inquiry) => (
+                          <TableRow key={inquiry.id} data-testid={`row-partnership-${inquiry.id}`}>
+                            <TableCell>{inquiry.company}</TableCell>
+                            <TableCell>{inquiry.manager}</TableCell>
+                            <TableCell>{inquiry.phone}</TableCell>
+                            <TableCell>{inquiry.email}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </div>
               </div>
             </Card>
