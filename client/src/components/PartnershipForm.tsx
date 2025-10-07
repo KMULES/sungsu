@@ -4,8 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building2, Mail } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PartnershipForm() {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     company: "",
     manager: "",
@@ -13,9 +17,34 @@ export default function PartnershipForm() {
     email: "",
   });
 
+  const mutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      return await apiRequest("POST", "/api/partnership-inquiries", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "문의 완료!",
+        description: "제휴 문의가 성공적으로 접수되었습니다. 빠른 시일 내에 연락드리겠습니다.",
+      });
+      setFormData({
+        company: "",
+        manager: "",
+        phone: "",
+        email: "",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "문의 중 문제가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Partnership inquiry submitted:", formData);
+    mutation.mutate(formData);
   };
 
   return (
@@ -28,7 +57,10 @@ export default function PartnershipForm() {
               브랜드 제휴 및<br />광고 문의
             </h2>
             <p className="text-muted-foreground leading-relaxed">
-              성수팝업과 함께 특별한 브랜드 경험을 만들어보세요.
+              성수 팝업 지도를 통해 브랜드를 자연스럽게 홍보하세요. 
+              MZ세대가 직접 찾는 오프라인 광고 플랫폼입니다.
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
               제휴 및 광고 문의를 남겨주시면 빠르게 연락드리겠습니다.
             </p>
           </div>
@@ -103,8 +135,14 @@ export default function PartnershipForm() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg" data-testid="button-submit-partnership">
-                문의하기
+              <Button 
+                type="submit" 
+                className="w-full" 
+                size="lg" 
+                data-testid="button-submit-partnership"
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? "전송 중..." : "문의하기"}
               </Button>
             </form>
           </Card>

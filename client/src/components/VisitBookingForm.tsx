@@ -11,12 +11,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface VisitBookingFormProps {
   popups: string[];
 }
 
 export default function VisitBookingForm({ popups }: VisitBookingFormProps) {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     visitDate: "",
     name: "",
@@ -24,9 +28,34 @@ export default function VisitBookingForm({ popups }: VisitBookingFormProps) {
     phone: "",
   });
 
+  const mutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      return await apiRequest("POST", "/api/visit-bookings", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "신청 완료!",
+        description: "팝업 방문 신청이 성공적으로 접수되었습니다.",
+      });
+      setFormData({
+        visitDate: "",
+        name: "",
+        popup: "",
+        phone: "",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "신청 중 문제가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Visit booking submitted:", formData);
+    mutation.mutate(formData);
   };
 
   return (
@@ -113,8 +142,14 @@ export default function VisitBookingForm({ popups }: VisitBookingFormProps) {
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg" data-testid="button-submit-booking">
-              방문 신청하기
+            <Button 
+              type="submit" 
+              className="w-full" 
+              size="lg" 
+              data-testid="button-submit-booking"
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? "신청 중..." : "방문 신청하기"}
             </Button>
           </form>
         </Card>
